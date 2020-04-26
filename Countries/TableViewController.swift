@@ -20,6 +20,59 @@ class TableViewController: UITableViewController {
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
         title = "Countries"
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            if let namesURL = URL(string: "http://country.io/names.json"),
+                let capitalsURL = URL(string: "http://country.io/capital.json"),
+                let phonesURL = URL(string: "http://country.io/phone.json"),
+                let currenciesURL = URL(string: "http://country.io/currency.json") {
+                
+                let names = self.fetchData(from: namesURL)
+                let capitals = self.fetchData(from: capitalsURL)
+                let phones = self.fetchData(from: phonesURL)
+                let currencies = self.fetchData(from: currenciesURL)
+                
+                if (names.count == capitals.count) == (phones.count == currencies.count) {
+                    for index in 0..<names.count {
+                        self.countries.append(Country(name: names[index], capital: capitals[index], phone: phones[index], currency: currencies[index]))
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+                
+                return
+            }
+            
+            self.showError()
+        }
+    }
+    
+    @objc func showError() {
+        DispatchQueue.main.async {
+            let ac = UIAlertController(title: "Loading error", message: "There was a problem loading the feed; please check your connection and try again.", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(ac, animated: true)
+        }
+    }
+    
+    func fetchData(from url: URL) -> [String] {
+        var result = [String]()
+        
+        if let data = try? Data(contentsOf: url) {
+            var str = String(data: data, encoding: .utf8)!
+            str.removeFirst()
+            str.removeLast()
+            
+            let fetchedData = str.components(separatedBy: "\", \"")
+            
+            for dataRow in fetchedData {
+                result.append(dataRow.components(separatedBy: ":")[1].replacingOccurrences(of: "\"", with: ""))
+            }
+        }
+        
+        return result
     }
 
     // MARK: - Table view data source

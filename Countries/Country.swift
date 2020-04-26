@@ -9,7 +9,6 @@
 import Foundation
 
 struct Country: Codable {
-    let code: String
     let name: String
     let capital: String
     let phone: String
